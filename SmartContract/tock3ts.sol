@@ -47,21 +47,25 @@ contract EventFactory is ERC721Enumerable, Ownable {
     mapping(address => bool) isAddressRegistered;
     mapping(address => uint) isAddressVerified;
 
-    mapping(uint => address) tock3tToOwner;
-    mapping(address => uint) ownerTock3tCount;
+    //mapping(uint => address) public tock3tToOwner;
+    //mapping(address => uint) ownerTock3tCount;
 
     uint registerPrice;
+    uint createEventPrice;
 
-    constructor(uint _registerPrice) ERC721("tock3ts", "TOCK3T"){
-        registerPrice = _registerPrice;
+    //Prices go in ether
+    constructor(uint _registerPrice, uint _createEventPrice) ERC721("tock3ts", "TOCK3T"){
+        registerPrice = _registerPrice * 1 ether;
+        createEventPrice = _createEventPrice * 1 ether;
     }
 
     function createEvent(string _eventName, string _eventDescription, uint _eventStartDate, uint _eventEndDate,
         string _eventLocation, string[] _eventImages, uint _saleStartDate, string[] _eTName, string[] _eTDescription,
         uint[] _eTMaxSupply, uint[] _eTTokenPrice, string[] _eTBaseURI) public payable {
-
+        require(createEventPrice <= msg.value, "tock3ts: incorrect payable amount.");
+        require(isAddressVerified[msg.sender], "tock3ts: address not verified.");
         require(_eTName.length == _eTDescription.length == _eTMaxSupply.length ==
-            _eTTokenPrice.length == _eTBaseURI.length, "tock3ts: group lengths do not coincide");
+            _eTTokenPrice.length == _eTBaseURI.length, "tock3ts: array lengths do not coincide.");
 
         EventTock3t[] newEventTock3ts;
         for (uint i=0; i < _eTName.length; i++){
@@ -80,9 +84,9 @@ contract EventFactory is ERC721Enumerable, Ownable {
 
     function buyTok3ts(uint eventTock3tId, uint tock3tAmount) payable{
         require(eventTock3ts[eventTock3tId].mintedSupply + tock3tAmount <= eventTock3ts[eventTock3tId].maxSupply,
-            "tock3ts: tock3t allocation exceeded");
+            "tock3ts: tock3t allocation exceeded.");
         require(eventTock3ts[eventTock3tId].tokenPrice * tock3tAmount <= msg.value,
-            "tock3ts: incorrect payable amount");
+            "tock3ts: incorrect payable amount.");
 
         for (uint i=0; i < tock3tAmount; i++){
             Tock3t tock3t;
@@ -91,15 +95,11 @@ contract EventFactory is ERC721Enumerable, Ownable {
             tock3t.tokenNumber = eventTock3ts[eventTock3tId].mintedSupply.Add(1);
             tock3t.revealed = false;
             _safeMint(msg.sender, tock3t.id);
-
-            ownerTock3tCount++;
-            tock3tToOwner[tock3t.id] = msg.sender;
         }
-
     }
 
     function register() payable {
-        require(registerPrice <= msg.value, "tock3ts: incorrect payable amount");
+        require(registerPrice <= msg.value, "tock3ts: incorrect payable amount.");
 
         isAddressRegistered[msg.sender] = true;
     }
@@ -122,5 +122,18 @@ contract EventFactory is ERC721Enumerable, Ownable {
         return isAddressVerified[addr];
     }
 
+    function isRegistered(address addr) returns (bool){
+        return isAddressRegistered[addr];
+    }
+
+    //Price goes in ether
+    function setRegisterPrice(uint _registerPrice) onlyOwner{
+        registerPrice = _registerPrice * 1 ether;
+    }
+
+    //Price goes in ether
+    function setCreateEventPrice(uint _createEventPrice) onlyOwner{
+        createEventPrice = _createEventPrice * 1 ether;
+    }
 
 }
