@@ -17,7 +17,6 @@ contract Tock3ts is ERC721Enumerable, Ownable {
 
     struct Event {
         uint id;
-        address owner;
         string name;
         string description;
         uint startDate;
@@ -53,11 +52,13 @@ contract Tock3ts is ERC721Enumerable, Ownable {
     mapping(address => bool) isAddressRegistered;
     mapping(address => bool) isAddressVerified;
 
+    mapping(uint => address) eventToOwner;
+
     mapping(uint => address) tokenToAddress;
 
-    uint registerPrice;
-    uint createEventPrice;
-    uint createEventTock3tPrice;
+    uint public registerPrice;
+    uint public createEventPrice;
+    uint public createEventTock3tPrice;
 
     constructor (uint _registerPrice, uint _createEventPrice, uint _createEventTock3tPrice) ERC721("tock3ts", "TOCK3T"){
         registerPrice = _registerPrice;
@@ -71,14 +72,16 @@ contract Tock3ts is ERC721Enumerable, Ownable {
         require(createEventPrice <= msg.value, "tock3ts: insuficient payable amount.");
         require(isAddressVerified[msg.sender], "tock3ts: address not verified.");
 
-        Event memory newEvent = Event(events.length + 1, msg.sender, _eventName, _eventDescription, _eventStartDate,
+        Event memory newEvent = Event(events.length + 1, _eventName, _eventDescription, _eventStartDate,
             _eventEndDate, _eventLocation, _eventImages, _saleStartDate, _saleEndDate);
         events.push(newEvent);
+        eventToOwner[events.length] = msg.sender;
         emit NewEventCreated(newEvent);
     }
 
     function createEventTock3ts(uint _eventId, string[] memory _eTName, string[] memory _eTDescription,
         uint[] memory _eTMaxSupply, uint[] memory _eTTokenPrice, string[] memory _eTBaseImageURI) public payable {
+        require(eventToOwner[_eventId] == msg.sender, "tock3ts: sender is not event owner");
         require(_eTName.length == _eTDescription.length && _eTDescription.length == _eTMaxSupply.length
         && _eTMaxSupply.length == _eTTokenPrice.length && _eTTokenPrice.length == _eTBaseImageURI.length,
             "tock3ts: array lengths do not coincide.");
@@ -110,10 +113,11 @@ contract Tock3ts is ERC721Enumerable, Ownable {
             tock3t.eventTock3tId = eventTock3tId;
             tock3t.tokenNumber = eventTock3t.mintedSupply.add(1);
             tock3t.revealed = false;
+            tock3ts.push(tock3t);
             _safeMint(msg.sender, tock3t.id);
             tokenToAddress[tock3t.id] = msg.sender;
         }
-        payable(thisEvent.owner).transfer((eventTock3t.tokenPrice * tock3tAmount) * 4 / 5);
+        payable(eventToOwner[thisEvent.id]).transfer((eventTock3t.tokenPrice * tock3tAmount) * 4 / 5);
         emit NewSale(eventTock3t.eventId, tock3tAmount);
     }
 
@@ -139,11 +143,11 @@ contract Tock3ts is ERC721Enumerable, Ownable {
         isAddressVerified[addr] = false;
     }
 
-    function isVerified(address addr) public returns (bool){
+    function isVerified(address addr) public view returns (bool){
         return isAddressVerified[addr];
     }
 
-    function isRegistered(address addr) public returns (bool){
+    function isRegistered(address addr) public view returns (bool){
         return isAddressRegistered[addr];
     }
 
@@ -159,23 +163,46 @@ contract Tock3ts is ERC721Enumerable, Ownable {
         createEventTock3tPrice = _createEventTock3tPrice;
     }
 
+    function transferEventOwnership(address _to, uint _eventId) public {
+        require(eventToOwner[_eventId] == msg.sender, "tock3ts: sender is not owner of event");
+        require(isAddressVerified[_to], "tock3ts: recipient address is not verified");
+
+        eventToOwner[_eventId] = _to;
+    }
+
     function withdraw() external onlyOwner{
         payable(msg.sender).transfer(address(this).balance);
     }
 
-    function _getEvent(uint eventId) private returns (Event memory){
+    function _getEvent(uint eventId) private view returns (Event memory){
         return events[eventId];
     }
 
-    function _getEventTock3t(uint eventTock3tId) private returns (EventTock3t memory){
+    function _getEventTock3t(uint eventTock3tId) private view returns (EventTock3t memory){
         return eventTock3ts[eventTock3tId];
     }
 
-    function _getTock3t(uint tock3tId) private returns (Tock3t memory){
+    function _getTock3t(uint tock3tId) private view returns (Tock3t memory){
         return tock3ts[tock3tId];
     }
 
-    function isRevealed(uint tokenId) public returns (bool){
+    function getRegisterPrice() public view returns (uint){
+        return registerPrice;
+    }
+
+    function getCreateEventPrice() public view returns (uint){
+        return createEventPrice;
+    }
+
+    function getCreateEventTock3tPrice() public view returns (uint){
+        return createEventTock3tPrice;
+    }
+
+    function getEventTock3tPrice(uint eventTock3tId) public view returns (uint){
+        return _getEventTock3t(eventTock3tId).tokenPrice;
+    }
+
+    function isRevealed(uint tokenId) public view returns (bool){
         return _getTock3t(tokenId).revealed;
     }
 
