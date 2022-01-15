@@ -89,8 +89,8 @@ contract Tock3ts is ERC721Enumerable, Ownable {
         for (uint i=0; i < _eTName.length; i++){
             EventTock3t memory eventTock3t = EventTock3t(eventTock3ts.length, _eventId, _eTName[i],
                 _eTDescription[i], _eTMaxSupply[i], _eTTokenPrice[i], 0, _eTBaseImageURI[i]);
-            eventTock3ts.push(eventTock3t);
             eventToEventTock3ts[_eventId].push(eventTock3ts.length);
+            eventTock3ts.push(eventTock3t);
             emit NewEventTock3tCreated(eventTock3t);
         }
     }
