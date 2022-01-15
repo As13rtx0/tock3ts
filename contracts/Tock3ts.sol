@@ -57,29 +57,35 @@ contract Tock3ts is ERC721Enumerable, Ownable {
 
     uint registerPrice;
     uint createEventPrice;
+    uint createEventTock3tPrice;
 
-    constructor (uint _registerPrice, uint _createEventPrice) ERC721("tock3ts", "TOCK3T"){
+    constructor (uint _registerPrice, uint _createEventPrice, uint _createEventTock3tPrice) ERC721("tock3ts", "TOCK3T"){
         registerPrice = _registerPrice;
         createEventPrice = _createEventPrice;
+        createEventTock3tPrice = _createEventTock3tPrice;
     }
 
     function createEvent(string memory _eventName, string memory _eventDescription, uint _eventStartDate,
         uint _eventEndDate, string memory _eventLocation, string[] memory _eventImages,
-        uint _saleStartDate, uint _saleEndDate, string[] memory _eTName, string[] memory _eTDescription,
-        uint[] memory _eTMaxSupply, uint[] memory _eTTokenPrice, string[] memory _eTBaseImageURI) public payable {
-        require(createEventPrice <= msg.value, "tock3ts: incorrect payable amount.");
+        uint _saleStartDate, uint _saleEndDate) public payable {
+        require(createEventPrice <= msg.value, "tock3ts: insuficient payable amount.");
         require(isAddressVerified[msg.sender], "tock3ts: address not verified.");
-        require(_eTName.length == _eTDescription.length && _eTDescription.length == _eTMaxSupply.length
-            && _eTMaxSupply.length == _eTTokenPrice.length && _eTTokenPrice.length == _eTBaseImageURI.length,
-            "tock3ts: array lengths do not coincide.");
 
         Event memory newEvent = Event(events.length + 1, msg.sender, _eventName, _eventDescription, _eventStartDate,
             _eventEndDate, _eventLocation, _eventImages, _saleStartDate, _saleEndDate);
         events.push(newEvent);
         emit NewEventCreated(newEvent);
+    }
+
+    function createEventTock3ts(uint _eventId, string[] memory _eTName, string[] memory _eTDescription,
+        uint[] memory _eTMaxSupply, uint[] memory _eTTokenPrice, string[] memory _eTBaseImageURI) public payable {
+        require(_eTName.length == _eTDescription.length && _eTDescription.length == _eTMaxSupply.length
+        && _eTMaxSupply.length == _eTTokenPrice.length && _eTTokenPrice.length == _eTBaseImageURI.length,
+            "tock3ts: array lengths do not coincide.");
+        require(createEventTock3tPrice * _eTName.length <= msg.value, "tock3ts: insuficient payable amount.");
 
         for (uint i=0; i < _eTName.length; i++){
-            EventTock3t memory eventTock3t = EventTock3t(eventTock3ts.length +1, newEvent.id, _eTName[i],
+            EventTock3t memory eventTock3t = EventTock3t(eventTock3ts.length +1, _eventId, _eTName[i],
                 _eTDescription[i], _eTMaxSupply[i], _eTTokenPrice[i], 0, _eTBaseImageURI[i]);
             eventTock3ts.push(eventTock3t);
             emit NewEventTock3tCreated(eventTock3t);
@@ -92,7 +98,7 @@ contract Tock3ts is ERC721Enumerable, Ownable {
         require(eventTock3t.mintedSupply + tock3tAmount <= eventTock3t.maxSupply,
             "tock3ts: tock3t allocation exceeded.");
         require(eventTock3t.tokenPrice * tock3tAmount <= msg.value,
-            "tock3ts: incorrect payable amount.");
+            "tock3ts: insuficient payable amount.");
         require(block.timestamp >= thisEvent.saleStartDate,
             "tock3ts: sale for this event has not started");
         require(block.timestamp < thisEvent.saleEndDate,
@@ -112,7 +118,7 @@ contract Tock3ts is ERC721Enumerable, Ownable {
     }
 
     function register() payable public {
-        require(registerPrice <= msg.value, "tock3ts: incorrect payable amount.");
+        require(registerPrice <= msg.value, "tock3ts: insuficient payable amount.");
 
         isAddressRegistered[msg.sender] = true;
     }
@@ -147,6 +153,10 @@ contract Tock3ts is ERC721Enumerable, Ownable {
 
     function setCreateEventPrice(uint _createEventPrice) public onlyOwner{
         createEventPrice = _createEventPrice;
+    }
+
+    function setCreateEventTock3tPrice(uint _createEventTock3tPrice) public onlyOwner{
+        createEventTock3tPrice = _createEventTock3tPrice;
     }
 
     function withdraw() external onlyOwner{
