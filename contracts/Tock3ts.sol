@@ -45,9 +45,9 @@ contract Tock3ts is ERC721Enumerable, Ownable {
         bool revealed;
     }
 
-    Event[] events;
-    EventTock3t[] eventTock3ts;
-    Tock3t[] tock3ts;
+    Event[] public events;
+    EventTock3t[] public eventTock3ts;
+    Tock3t[] public tock3ts;
 
     mapping(address => bool) isAddressRegistered;
     mapping(address => bool) isAddressVerified;
