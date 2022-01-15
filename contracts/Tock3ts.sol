@@ -23,8 +23,7 @@ contract Tock3ts is ERC721Enumerable, Ownable {
         uint endDate;
         string location;
         string[] images;
-        uint saleStartDate;
-        uint saleEndDate;
+        bool saleActive;
     }
 
     struct EventTock3t {
@@ -67,13 +66,12 @@ contract Tock3ts is ERC721Enumerable, Ownable {
     }
 
     function createEvent(string memory _eventName, string memory _eventDescription, uint _eventStartDate,
-        uint _eventEndDate, string memory _eventLocation, string[] memory _eventImages,
-        uint _saleStartDate, uint _saleEndDate) public payable {
+        uint _eventEndDate, string memory _eventLocation, string[] memory _eventImages) public payable {
         require(createEventPrice <= msg.value, "tock3ts: insuficient payable amount.");
         require(isAddressVerified[msg.sender], "tock3ts: address not verified.");
 
         Event memory newEvent = Event(events.length, _eventName, _eventDescription, _eventStartDate,
-            _eventEndDate, _eventLocation, _eventImages, _saleStartDate, _saleEndDate);
+            _eventEndDate, _eventLocation, _eventImages, false);
         eventToOwner[events.length] = msg.sender;
         events.push(newEvent);
         emit NewEventCreated(newEvent);
@@ -102,10 +100,8 @@ contract Tock3ts is ERC721Enumerable, Ownable {
             "tock3ts: tock3t allocation exceeded.");
         require(thisEventTock3t.tokenPrice * tock3tAmount <= msg.value,
             "tock3ts: insuficient payable amount.");
-        require(block.timestamp >= thisEvent.saleStartDate,
-            "tock3ts: sale for this event has not started");
-        require(block.timestamp < thisEvent.saleEndDate,
-            "tock3ts: sale for this event has ended");
+        require(thisEvent.saleActive,
+            "tock3ts: sale is not active");
 
         for (uint i=0; i < tock3tAmount; i++){
             Tock3t memory tock3t;
@@ -201,6 +197,11 @@ contract Tock3ts is ERC721Enumerable, Ownable {
         tock3ts[tokenId].revealed = true;
     }
 
+    function toggleSaleStatus(uint eventId) public {
+        require(eventToOwner[eventId] == msg.sender, "tock3ts: event is not owned by sender.");
+        events[eventId].saleActive = !events[eventId].saleActive;
+    }
+
 //    function tenNextEvents() public returns (uint[]){
 //
 //    }
@@ -222,6 +223,17 @@ contract Tock3ts is ERC721Enumerable, Ownable {
 
         tokenToAddress[tokenId] = to;
         _transfer(from, to, tokenId);
+    }
+
+    function safeTransferFrom(
+        address from,
+        address to,
+        uint256 tokenId,
+        bytes memory _data
+    ) public virtual override(ERC721) {
+        require(_isApprovedOrOwner(_msgSender(), tokenId), "tock3ts: transfer caller is not owner nor approved");
+        require(!isRevealed(tokenId), "tock3ts: tock3t is revealed");
+        _safeTransfer(from, to, tokenId, _data);
     }
     //Overrides end
 }
