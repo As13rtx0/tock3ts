@@ -1,2 +1,2 @@
 # tock3ts
-A web 3 Ticketing Dapp based on Nft…. bla bla bla
+A web3 ticketing app for polygon, using ERC721 tokens as event tickets.
