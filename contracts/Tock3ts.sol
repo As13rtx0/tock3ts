@@ -4,9 +4,12 @@ pragma solidity ^0.8.0;
 
 import "./ERC721Enumerable.sol";
 import "./Ownable.sol";
+import "./SafeMath.sol";
 
 
 contract Tock3ts is ERC721Enumerable, Ownable {
+
+    using SafeMath for uint;
 
     event NewEventCreated(Event newEvent);
     event NewEventTock3tCreated(EventTock3t newEventTock3t);
@@ -73,15 +76,14 @@ contract Tock3ts is ERC721Enumerable, Ownable {
         Event memory newEvent = Event(events.length + 1, msg.sender, _eventName, _eventDescription, _eventStartDate,
             _eventEndDate, _eventLocation, _eventImages, _saleStartDate, _saleEndDate);
         events.push(newEvent);
-        NewEventCreated(newEvent);
+        emit NewEventCreated(newEvent);
 
         for (uint i=0; i < _eTName.length; i++){
             EventTock3t memory eventTock3t = EventTock3t(eventTock3ts.length +1, newEvent.id, _eTName[i],
                 _eTDescription[i], _eTMaxSupply[i], _eTTokenPrice[i], 0, _eTBaseImageURI[i]);
             eventTock3ts.push(eventTock3t);
-            NewEventTock3tCreated(eventTock3t);
+            emit NewEventTock3tCreated(eventTock3t);
         }
-
     }
 
     function buyTok3ts(uint eventTock3tId, uint tock3tAmount) public payable{
@@ -100,13 +102,13 @@ contract Tock3ts is ERC721Enumerable, Ownable {
             Tock3t memory tock3t;
             tock3t.id = tock3ts.length + 1;
             tock3t.eventTock3tId = eventTock3tId;
-            tock3t.tokenNumber = eventTock3t.mintedSupply.Sum(1);
+            tock3t.tokenNumber = eventTock3t.mintedSupply.add(1);
             tock3t.revealed = false;
             _safeMint(msg.sender, tock3t.id);
             tokenToAddress[tock3t.id] = msg.sender;
         }
         payable(thisEvent.owner).transfer((eventTock3t.tokenPrice * tock3tAmount) * 4 / 5);
-        NewSale(eventTock3t.eventId, tock3tAmount);
+        emit NewSale(eventTock3t.eventId, tock3tAmount);
     }
 
     function register() payable public {
@@ -177,7 +179,7 @@ contract Tock3ts is ERC721Enumerable, Ownable {
     function tokenURI(uint tokenId) public view override(ERC721) returns (string memory) {
         require(_exists(tokenId), "tock3ts: cannot query non-existent token");
 
-        return _getEventTock3t(_getTock3t(tokenId).eventTock3tId).baseImageURI;
+        return eventTock3ts[tock3ts[tokenId].eventTock3tId].baseImageURI;
     }
 
     function transferFrom(
