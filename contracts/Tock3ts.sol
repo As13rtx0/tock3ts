@@ -72,10 +72,10 @@ contract Tock3ts is ERC721Enumerable, Ownable {
         require(createEventPrice <= msg.value, "tock3ts: insuficient payable amount.");
         require(isAddressVerified[msg.sender], "tock3ts: address not verified.");
 
-        Event memory newEvent = Event(events.length + 1, _eventName, _eventDescription, _eventStartDate,
+        Event memory newEvent = Event(events.length, _eventName, _eventDescription, _eventStartDate,
             _eventEndDate, _eventLocation, _eventImages, _saleStartDate, _saleEndDate);
-        events.push(newEvent);
         eventToOwner[events.length] = msg.sender;
+        events.push(newEvent);
         emit NewEventCreated(newEvent);
     }
 
@@ -88,7 +88,7 @@ contract Tock3ts is ERC721Enumerable, Ownable {
         require(createEventTock3tPrice * _eTName.length <= msg.value, "tock3ts: insuficient payable amount.");
 
         for (uint i=0; i < _eTName.length; i++){
-            EventTock3t memory eventTock3t = EventTock3t(eventTock3ts.length +1, _eventId, _eTName[i],
+            EventTock3t memory eventTock3t = EventTock3t(eventTock3ts.length, _eventId, _eTName[i],
                 _eTDescription[i], _eTMaxSupply[i], _eTTokenPrice[i], 0, _eTBaseImageURI[i]);
             eventTock3ts.push(eventTock3t);
             emit NewEventTock3tCreated(eventTock3t);
@@ -96,11 +96,11 @@ contract Tock3ts is ERC721Enumerable, Ownable {
     }
 
     function buyTok3ts(uint eventTock3tId, uint tock3tAmount) public payable{
-        EventTock3t memory eventTock3t = _getEventTock3t(eventTock3tId);
-        Event memory thisEvent = _getEvent(eventTock3t.eventId);
-        require(eventTock3t.mintedSupply + tock3tAmount <= eventTock3t.maxSupply,
+        EventTock3t memory thisEventTock3t = eventTock3ts[eventTock3tId];
+        Event memory thisEvent = events[thisEventTock3t.eventId];
+        require(thisEventTock3t.mintedSupply + tock3tAmount <= thisEventTock3t.maxSupply,
             "tock3ts: tock3t allocation exceeded.");
-        require(eventTock3t.tokenPrice * tock3tAmount <= msg.value,
+        require(thisEventTock3t.tokenPrice * tock3tAmount <= msg.value,
             "tock3ts: insuficient payable amount.");
         require(block.timestamp >= thisEvent.saleStartDate,
             "tock3ts: sale for this event has not started");
@@ -109,16 +109,17 @@ contract Tock3ts is ERC721Enumerable, Ownable {
 
         for (uint i=0; i < tock3tAmount; i++){
             Tock3t memory tock3t;
-            tock3t.id = tock3ts.length + 1;
+            tock3t.id = tock3ts.length;
             tock3t.eventTock3tId = eventTock3tId;
-            tock3t.tokenNumber = eventTock3t.mintedSupply.add(1);
+            tock3t.tokenNumber = thisEventTock3t.mintedSupply + 1;
             tock3t.revealed = false;
             tock3ts.push(tock3t);
             _safeMint(msg.sender, tock3t.id);
             tokenToAddress[tock3t.id] = msg.sender;
+            thisEventTock3t.mintedSupply + 1;
         }
-        payable(eventToOwner[thisEvent.id]).transfer((eventTock3t.tokenPrice * tock3tAmount) * 4 / 5);
-        emit NewSale(eventTock3t.eventId, tock3tAmount);
+        payable(eventToOwner[thisEvent.id]).transfer((thisEventTock3t.tokenPrice * tock3tAmount) * 4 / 5);
+        emit NewSale(thisEventTock3t.eventId, tock3tAmount);
     }
 
     function register() payable public {
@@ -174,18 +175,6 @@ contract Tock3ts is ERC721Enumerable, Ownable {
         payable(msg.sender).transfer(address(this).balance);
     }
 
-    function _getEvent(uint eventId) private view returns (Event memory){
-        return events[eventId];
-    }
-
-    function _getEventTock3t(uint eventTock3tId) private view returns (EventTock3t memory){
-        return eventTock3ts[eventTock3tId];
-    }
-
-    function _getTock3t(uint tock3tId) private view returns (Tock3t memory){
-        return tock3ts[tock3tId];
-    }
-
     function getRegisterPrice() public view returns (uint){
         return registerPrice;
     }
@@ -199,18 +188,22 @@ contract Tock3ts is ERC721Enumerable, Ownable {
     }
 
     function getEventTock3tPrice(uint eventTock3tId) public view returns (uint){
-        return _getEventTock3t(eventTock3tId).tokenPrice;
+        return eventTock3ts[eventTock3tId].tokenPrice;
     }
 
     function isRevealed(uint tokenId) public view returns (bool){
-        return _getTock3t(tokenId).revealed;
+        return tock3ts[tokenId].revealed;
     }
 
     function reveal(uint tokenId) public{
         require(tokenToAddress[tokenId] == msg.sender, "tock3ts: token is not owned by sender.");
 
-        _getTock3t(tokenId).revealed = true;
+        tock3ts[tokenId].revealed = true;
     }
+
+//    function tenNextEvents() public returns (uint[]){
+//
+//    }
 
     // Overrides start
     function tokenURI(uint tokenId) public view override(ERC721) returns (string memory) {
