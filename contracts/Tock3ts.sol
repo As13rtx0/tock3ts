@@ -93,7 +93,7 @@ contract Tock3ts is ERC721Enumerable, Ownable {
         }
     }
 
-    function buyTok3ts(uint eventTock3tId, uint tock3tAmount) public payable{
+    function buyTock3ts(uint eventTock3tId, uint tock3tAmount) public payable{
         EventTock3t memory thisEventTock3t = eventTock3ts[eventTock3tId];
         Event memory thisEvent = events[thisEventTock3t.eventId];
         require(thisEventTock3t.mintedSupply + tock3tAmount <= thisEventTock3t.maxSupply,
@@ -112,7 +112,7 @@ contract Tock3ts is ERC721Enumerable, Ownable {
             tock3ts.push(tock3t);
             _safeMint(msg.sender, tock3t.id);
             tokenToAddress[tock3t.id] = msg.sender;
-            thisEventTock3t.mintedSupply + 1;
+            thisEventTock3t.mintedSupply++;
         }
         payable(eventToOwner[thisEvent.id]).transfer((thisEventTock3t.tokenPrice * tock3tAmount) * 4 / 5);
         emit NewSale(thisEventTock3t.eventId, tock3tAmount);
@@ -202,9 +202,17 @@ contract Tock3ts is ERC721Enumerable, Ownable {
         events[eventId].saleActive = !events[eventId].saleActive;
     }
 
-//    function tenNextEvents() public returns (uint[]){
-//
-//    }
+    function tenNextEvents() public view returns (uint[] memory){
+        uint[] memory ids;
+        uint counter;
+        for (uint i=0; i < events.length && i < 10; i++){
+            if (events[i].startDate > block.timestamp) {
+                ids[counter] = i;
+                counter++;
+            }
+        }
+        return ids;
+    }
 
     // Overrides start
     function tokenURI(uint tokenId) public view override(ERC721) returns (string memory) {
