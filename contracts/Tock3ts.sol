@@ -50,6 +50,8 @@ contract Tock3ts is ERC721Enumerable, Ownable {
     mapping(address => bool) isAddressRegistered;
     mapping(address => bool) isAddressVerified;
 
+    mapping(uint => address) tokenToAddress;
+
     uint registerPrice;
     uint createEventPrice;
 
@@ -58,13 +60,15 @@ contract Tock3ts is ERC721Enumerable, Ownable {
         createEventPrice = _createEventPrice;
     }
 
-    function createEvent(string _eventName, string _eventDescription, uint _eventStartDate, uint _eventEndDate,
-        string _eventLocation, string[] _eventImages, uint _saleStartDate, uint _saleEndDate, string[] _eTName,
-        string[] _eTDescription, uint[] _eTMaxSupply, uint[] _eTTokenPrice, string[] _eTBaseImageURI) public payable {
+    function createEvent(string memory _eventName, string memory _eventDescription, uint _eventStartDate,
+        uint _eventEndDate, string memory _eventLocation, string[] memory _eventImages,
+        uint _saleStartDate, uint _saleEndDate, string[] memory _eTName, string[] memory _eTDescription,
+        uint[] memory _eTMaxSupply, uint[] memory _eTTokenPrice, string[] memory _eTBaseImageURI) public payable {
         require(createEventPrice <= msg.value, "tock3ts: incorrect payable amount.");
         require(isAddressVerified[msg.sender], "tock3ts: address not verified.");
-        require(_eTName.length == _eTDescription.length == _eTMaxSupply.length ==
-            _eTTokenPrice.length == _eTBaseURI.length, "tock3ts: array lengths do not coincide.");
+        require(_eTName.length == _eTDescription.length && _eTDescription.length == _eTMaxSupply.length
+            && _eTMaxSupply.length == _eTTokenPrice.length && _eTTokenPrice.length == _eTBaseImageURI.length,
+            "tock3ts: array lengths do not coincide.");
 
         Event memory newEvent = Event(events.length + 1, msg.sender, _eventName, _eventDescription, _eventStartDate,
             _eventEndDate, _eventLocation, _eventImages, _saleStartDate, _saleEndDate);
@@ -82,7 +86,7 @@ contract Tock3ts is ERC721Enumerable, Ownable {
 
     function buyTok3ts(uint eventTock3tId, uint tock3tAmount) public payable{
         EventTock3t memory eventTock3t = _getEventTock3t(eventTock3tId);
-        Event memory thisEvent = _getEvent(eventId);
+        Event memory thisEvent = _getEvent(eventTock3t.eventId);
         require(eventTock3t.mintedSupply + tock3tAmount <= eventTock3t.maxSupply,
             "tock3ts: tock3t allocation exceeded.");
         require(eventTock3t.tokenPrice * tock3tAmount <= msg.value,
@@ -96,9 +100,10 @@ contract Tock3ts is ERC721Enumerable, Ownable {
             Tock3t memory tock3t;
             tock3t.id = tock3ts.length + 1;
             tock3t.eventTock3tId = eventTock3tId;
-            tock3t.tokenNumber = eventTock3t.mintedSupply.Add(1);
+            tock3t.tokenNumber = eventTock3t.mintedSupply.Sum(1);
             tock3t.revealed = false;
             _safeMint(msg.sender, tock3t.id);
+            tokenToAddress[tock3t.id] = msg.sender;
         }
         payable(thisEvent.owner).transfer((eventTock3t.tokenPrice * tock3tAmount) * 4 / 5);
         NewSale(eventTock3t.eventId, tock3tAmount);
@@ -115,7 +120,7 @@ contract Tock3ts is ERC721Enumerable, Ownable {
         isAddressRegistered[addr] = false;
     }
 
-    function bulkVerify(address[] addresses) public onlyOwner{
+    function bulkVerify(address[] memory addresses) public onlyOwner{
         for (uint i=0; i < addresses.length; i++){
             isAddressVerified[addresses[i]] = true;
             isAddressRegistered[addresses[i]] = false;
@@ -146,21 +151,45 @@ contract Tock3ts is ERC721Enumerable, Ownable {
         payable(msg.sender).transfer(address(this).balance);
     }
 
-    function _getEvent(uint eventId) private returns (Event){
+    function _getEvent(uint eventId) private returns (Event memory){
         return events[eventId];
     }
 
-    function _getEventTock3t(uint eventTock3tId) private returns (EventTock3t){
+    function _getEventTock3t(uint eventTock3tId) private returns (EventTock3t memory){
         return eventTock3ts[eventTock3tId];
     }
 
-    function _getTock3t(uint tock3tId) private returns (Tock3t){
+    function _getTock3t(uint tock3tId) private returns (Tock3t memory){
         return tock3ts[tock3tId];
     }
 
-    function tokenURI(uint256 tokenId) public view override(ERC721) returns (string memory) {
-        require(_exists(tokenId), "Cannot query non-existent token");
-
-        return _getEventTock3t(_getTock3t(tokenId).eventTock3tId).baseImageURI);
+    function isRevealed(uint tokenId) public returns (bool){
+        return _getTock3t(tokenId).revealed;
     }
+
+    function reveal(uint tokenId) public{
+        require(tokenToAddress[tokenId] == msg.sender, "tock3ts: token is not owned by sender.");
+
+        _getTock3t(tokenId).revealed = true;
+    }
+
+    // Overrides start
+    function tokenURI(uint tokenId) public view override(ERC721) returns (string memory) {
+        require(_exists(tokenId), "tock3ts: cannot query non-existent token");
+
+        return _getEventTock3t(_getTock3t(tokenId).eventTock3tId).baseImageURI;
+    }
+
+    function transferFrom(
+        address from,
+        address to,
+        uint256 tokenId
+    ) public virtual override(ERC721){
+        require(_isApprovedOrOwner(_msgSender(), tokenId), "tock3ts: transfer caller is not owner nor approved");
+        require(!isRevealed(tokenId), "tock3ts: tock3t is revealed");
+
+        tokenToAddress[tokenId] = to;
+        _transfer(from, to, tokenId);
+    }
+    //Overrides end
 }
