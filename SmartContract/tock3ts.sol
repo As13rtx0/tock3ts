@@ -7,12 +7,13 @@ import "./Ownable.sol";
 contract EventFactory is ERC721Enumerable, Ownable {
 
     event NewEvent(Event newEvent);
+    event NewEventTock3t(EventTock3t newEventTock3t);
     event NewSale(uint eventid, uint tock3tAmount);
 
     struct Event {
         uint id;
         address owner;
-        EventTickets[] EventTock3ts;
+        EventTock3t[] EventTock3ts;
         string name;
         string description;
         uint startDate;
@@ -31,7 +32,7 @@ contract EventFactory is ERC721Enumerable, Ownable {
         uint maxSupply;
         uint tokenPrice;
         uint mintedSupply;
-        string baseURI;
+        string baseImageURI;
     }
 
     struct Tock3t {
@@ -54,15 +55,14 @@ contract EventFactory is ERC721Enumerable, Ownable {
     uint registerPrice;
     uint createEventPrice;
 
-    //Prices go in ether
     constructor(uint _registerPrice, uint _createEventPrice) ERC721("tock3ts", "TOCK3T"){
-        registerPrice = _registerPrice * 1 ether;
-        createEventPrice = _createEventPrice * 1 ether;
+        registerPrice = _registerPrice;
+        createEventPrice = _createEventPrice;
     }
 
     function createEvent(string _eventName, string _eventDescription, uint _eventStartDate, uint _eventEndDate,
         string _eventLocation, string[] _eventImages, uint _saleStartDate, string[] _eTName, string[] _eTDescription,
-        uint[] _eTMaxSupply, uint[] _eTTokenPrice, string[] _eTBaseURI) public payable {
+        uint[] _eTMaxSupply, uint[] _eTTokenPrice, string[] _eTBaseImageURI) public payable {
         require(createEventPrice <= msg.value, "tock3ts: incorrect payable amount.");
         require(isAddressVerified[msg.sender], "tock3ts: address not verified.");
         require(_eTName.length == _eTDescription.length == _eTMaxSupply.length ==
@@ -72,9 +72,10 @@ contract EventFactory is ERC721Enumerable, Ownable {
         for (uint i=0; i < _eTName.length; i++){
             Tock3t[] emptyTock3ts;
             EventTock3t eventTock3t = EventTock3t(eventTock3ts.length +1, events.length + 1, emptyTock3ts, _eTName[i],
-                _eTDescription[i], _eTMaxSupply[i], _eTTokenPrice[i], 0, _eTBaseURI[i]);
+                _eTDescription[i], _eTMaxSupply[i], _eTTokenPrice[i], 0, _eTBaseImageURI[i]);
             eventTock3ts.push(eventTock3t);
             newEventTock3ts.push(eventTock3t);
+            NewEventTock3t(eventTock3t);
         }
 
         Event newEvent = Event(events.length + 1, msg.sender, newEventTock3ts, _eventName, _eventDescription, _eventStartDate,
@@ -101,7 +102,7 @@ contract EventFactory is ERC721Enumerable, Ownable {
             tock3t.revealed = false;
             _safeMint(msg.sender, tock3t.id);
         }
-        payable(thisEvent.owner).transfer(msg.value * 4 / 5);
+        payable(thisEvent.owner).transfer((eventTock3t.tokenPrice * tock3tAmount) * 4 / 5);
         NewSale(eventTock3t.eventId, tock3tAmount);
     }
 
@@ -135,17 +136,19 @@ contract EventFactory is ERC721Enumerable, Ownable {
         return isAddressRegistered[addr];
     }
 
-    //Price goes in ether
     function setRegisterPrice(uint _registerPrice) onlyOwner{
-        registerPrice = _registerPrice * 1 ether;
+        registerPrice = _registerPrice;
     }
 
-    //Price goes in ether
     function setCreateEventPrice(uint _createEventPrice) onlyOwner{
-        createEventPrice = _createEventPrice * 1 ether;
+        createEventPrice = _createEventPrice;
     }
 
     function withdraw() external onlyOwner{
         payable(msg.sender).transfer(address(this).balance);
+    }
+
+    function getEvent(uint eventId) returns (Event){
+        return events[eventId];
     }
 }
