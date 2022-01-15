@@ -9,8 +9,6 @@ import "./Address.sol";
 import "./Context.sol";
 import "./Strings.sol";
 import "./ERC165.sol";
-import "./tock3ts.sol";
-
 /**
  * @dev Implementation of https://eips.ethereum.org/EIPS/eip-721[ERC721] Non-Fungible Token Standard, including
  * the Metadata extension, but not including the Enumerable extension, which is available separately as
@@ -93,9 +91,8 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata {
     function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {
         require(_exists(tokenId), "ERC721Metadata: URI query for nonexistent token");
 
-        string memory tokenURI = eventTock3ts[tock3ts[tokenId].eventTock3tId].baseURI;
-
-        return tokenURI;
+        string memory baseURI = _baseURI();
+        return bytes(baseURI).length > 0 ? string(abi.encodePacked(baseURI, tokenId.toString())) : "";
     }
 
     /**
