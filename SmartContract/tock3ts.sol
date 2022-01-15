@@ -7,6 +7,7 @@ import "./Ownable.sol";
 contract EventFactory is ERC721Enumerable, Ownable {
 
     event NewEvent(Event newEvent);
+    event NewSale(uint eventid, uint tock3tAmount);
 
     struct Event {
         uint id;
@@ -83,19 +84,25 @@ contract EventFactory is ERC721Enumerable, Ownable {
     }
 
     function buyTok3ts(uint eventTock3tId, uint tock3tAmount) payable{
-        require(eventTock3ts[eventTock3tId].mintedSupply + tock3tAmount <= eventTock3ts[eventTock3tId].maxSupply,
+        EventTock3t eventTock3t = eventTock3ts[eventTock3tId];
+        Event thisEvent = events[eventTock3t.eventId];
+        require(eventTock3t.mintedSupply + tock3tAmount <= eventTock3t.maxSupply,
             "tock3ts: tock3t allocation exceeded.");
-        require(eventTock3ts[eventTock3tId].tokenPrice * tock3tAmount <= msg.value,
+        require(eventTock3t.tokenPrice * tock3tAmount <= msg.value,
             "tock3ts: incorrect payable amount.");
+        require(block.timestamp >= thisEvent.saleStartDate,
+            "tock3ts: sale for this event has not started");
 
         for (uint i=0; i < tock3tAmount; i++){
             Tock3t tock3t;
             tock3t.id = tock3ts.length + 1;
             tock3t.eventTock3tId = eventTock3tId;
-            tock3t.tokenNumber = eventTock3ts[eventTock3tId].mintedSupply.Add(1);
+            tock3t.tokenNumber = eventTock3t.mintedSupply.Add(1);
             tock3t.revealed = false;
             _safeMint(msg.sender, tock3t.id);
         }
+        payable(thisEvent.owner).transfer(msg.value * 4 / 5);
+        NewSale(eventTock3t.eventId, tock3tAmount);
     }
 
     function register() payable {
@@ -106,11 +113,13 @@ contract EventFactory is ERC721Enumerable, Ownable {
 
     function verify(address addr) onlyOwner{
         isAddressVerified[addr] = true;
+        isAddressRegistered[addr] = false;
     }
 
     function bulkVerify(address[] addresses) onlyOwner{
         for (uint i=0; i < addresses.length; i++){
             isAddressVerified[addresses[i]] = true;
+            isAddressRegistered[addresses[i]] = false;
         }
     }
 
@@ -136,4 +145,7 @@ contract EventFactory is ERC721Enumerable, Ownable {
         createEventPrice = _createEventPrice * 1 ether;
     }
 
+    function withdraw() external onlyOwner{
+        payable(msg.sender).transfer(address(this).balance);
+    }
 }
