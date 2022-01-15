@@ -117,7 +117,7 @@ contract Tock3ts is ERC721Enumerable, Ownable {
             thisEventTock3t.mintedSupply++;
         }
         uint refundExcess = msg.value - (thisEventTock3t.tokenPrice * tock3tAmount);
-        payable(eventToOwner[thisEvent.id]).transfer((thisEventTock3t.tokenPrice * tock3tAmount) * (4 / 5));
+        payable(eventToOwner[thisEvent.id]).transfer((thisEventTock3t.tokenPrice * tock3tAmount) * 4 / 5);
         payable(msg.sender).transfer(refundExcess);
         emit NewSale(thisEventTock3t.eventId, tock3tAmount);
     }
