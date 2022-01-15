@@ -52,6 +52,7 @@ contract Tock3ts is ERC721Enumerable, Ownable {
     mapping(address => bool) isAddressVerified;
 
     mapping(uint => address) eventToOwner;
+    mapping(uint => uint[]) eventToEventTock3ts;
 
     mapping(uint => address) tokenToAddress;
 
@@ -89,6 +90,7 @@ contract Tock3ts is ERC721Enumerable, Ownable {
             EventTock3t memory eventTock3t = EventTock3t(eventTock3ts.length, _eventId, _eTName[i],
                 _eTDescription[i], _eTMaxSupply[i], _eTTokenPrice[i], 0, _eTBaseImageURI[i]);
             eventTock3ts.push(eventTock3t);
+            eventToEventTock3ts[_eventId].push(eventTock3ts.length);
             emit NewEventTock3tCreated(eventTock3t);
         }
     }
@@ -114,7 +116,9 @@ contract Tock3ts is ERC721Enumerable, Ownable {
             tokenToAddress[tock3t.id] = msg.sender;
             thisEventTock3t.mintedSupply++;
         }
-        payable(eventToOwner[thisEvent.id]).transfer((thisEventTock3t.tokenPrice * tock3tAmount) * 4 / 5);
+        uint refundExcess = msg.value - (thisEventTock3t.tokenPrice * tock3tAmount);
+        payable(eventToOwner[thisEvent.id]).transfer((thisEventTock3t.tokenPrice * tock3tAmount) * (4 / 5));
+        payable(msg.sender).transfer(refundExcess);
         emit NewSale(thisEventTock3t.eventId, tock3tAmount);
     }
 
@@ -200,6 +204,10 @@ contract Tock3ts is ERC721Enumerable, Ownable {
     function toggleSaleStatus(uint eventId) public {
         require(eventToOwner[eventId] == msg.sender, "tock3ts: event is not owned by sender.");
         events[eventId].saleActive = !events[eventId].saleActive;
+    }
+
+    function getEventTock3tsByEvent(uint _eventId) public view returns(uint[] memory){
+        return eventToEventTock3ts[_eventId];
     }
 
     function tenNextEvents() public view returns (uint[] memory){
