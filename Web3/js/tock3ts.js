@@ -63,7 +63,7 @@ function displayEventCard(item){
     // <a href="event.html?id=${item.id}" className="btn btn-primary">Go to event</a>
     return `<div class="col-4 mt-3">
                 <div class="card event-${item.id}">
-                <img src="imgs/ayax22-368.jpeg" class="card-img-top" alt="..." style="max-height: ;">
+                <img src="https://static2.abc.es/media/cultura/2020/10/05/acdc-U01740111728wfQ-1200x630@abc.jpg" class="card-img-top" alt="..." style="max-height: ;">
                     <div class="card-body">
                         <h5 class="card-title">${item.name}</h5>
                         <p class="card-text">${item.description}</p>                        
@@ -75,7 +75,7 @@ function displayEventCard(item){
 }
 
 function addBuyButtonToEventCard(eventId, eventTock3t){
-    $(".event-" + eventId + ">.card-body" ).append(`<button type="button" class="buyTicket btn-primary w-100 mt-1" tock3t-event-id="${eventTock3t.id}" tock3t-price="${eventTock3t.tokenPrice}" onclick="buyTock3t(${eventTock3t.id},${eventTock3t.tokenPrice});"  >${eventTock3t.name}: ${web3js.utils.fromWei(eventTock3t.tokenPrice)} MATIC (${eventTock3t.maxSupply}/${eventTock3t.mintedSupply}) </button>`);
+    $(".event-" + eventId + ">.card-body" ).append(`<button type="button" class="buyTicket btn-primary w-100 mt-1" tock3t-event-id="${eventTock3t.id}" tock3t-price="${eventTock3t.tokenPrice}" onclick="buyTock3t(${eventTock3t.id},${eventTock3t.tokenPrice});"  >${eventTock3t.name}: ${web3js.utils.fromWei(eventTock3t.tokenPrice)} MATIC (${eventTock3t.mintedSupply}/${eventTock3t.maxSupply} sold)</button>`);
 }
 
 function getEventDetails(id){
@@ -104,7 +104,7 @@ function displayEventDetails(id, target){
                         <p>${item.description}</p>
                     </div>
                     <div className="col-6">
-                        <img src="imgs/ayax22-368.jpeg" alt="ayax" className="h-100">
+                        <img src="https://static2.abc.es/media/cultura/2020/10/05/acdc-U01740111728wfQ-1200x630@abc.jpg" alt="${item.name}" className="h-100">
                     </div>
                 </div>`
             )
