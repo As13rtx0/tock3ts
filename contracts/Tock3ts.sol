@@ -87,8 +87,10 @@ contract Tock3ts is ERC721Enumerable, Ownable {
         require(createEventTock3tPrice * _eTName.length <= msg.value, "tock3ts: insuficient payable amount.");
 
         for (uint i=0; i < _eTName.length; i++){
+
             EventTock3t memory eventTock3t = EventTock3t(eventTock3ts.length, _eventId, _eTName[i],
                 _eTDescription[i], _eTMaxSupply[i], _eTTokenPrice[i], 0, _eTBaseImageURI[i]);
+
             eventToEventTock3ts[_eventId].push(eventTock3ts.length);
             eventTock3ts.push(eventTock3t);
             emit NewEventTock3tCreated(eventTock3t);
@@ -197,7 +199,6 @@ contract Tock3ts is ERC721Enumerable, Ownable {
 
     function reveal(uint tokenId) public{
         require(tokenToAddress[tokenId] == msg.sender, "tock3ts: token is not owned by sender.");
-
         tock3ts[tokenId].revealed = true;
     }
 
@@ -210,7 +211,18 @@ contract Tock3ts is ERC721Enumerable, Ownable {
         return eventToEventTock3ts[_eventId];
     }
 
-    function tenNextEvents() public view returns (uint[] memory){
+    function getEventDetails(uint eventId) public view returns (Event memory, EventTock3t[] memory ){
+        //Event memory result = events[id];
+        uint[] memory eventTock3tsIds  =  eventToEventTock3ts[eventId];
+        EventTock3t[] memory eventTock3tsResult;
+        for(uint i=0;i<eventTock3tsIds.length;i++)
+        {
+            eventTock3tsResult[i]= eventTock3ts[eventTock3tsIds[i]];
+        }
+        return (events[eventId], eventTock3tsResult);
+    }
+
+    function getTenNextEvents() public view returns (uint[] memory){
         uint[] memory ids;
         uint counter;
         for (uint i=0; i < events.length && i < 10; i++){
