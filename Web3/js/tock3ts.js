@@ -72,7 +72,7 @@ function displayEventCard(item){
 }
 
 function addBuyButtonToEventCard(eventId, eventTock3t){
-    $(".event-" + eventId + ">.card-body" ).append(`<button type="button" class="buyTicket btn-primary w-100 mt-1" tock3t-event-id="${eventTock3t.id}" tock3t-price="${eventTock3t.tokenPrice}" onclick="buyTock3t(${eventTock3t.id},${eventTock3t.tokenPrice});"  >${eventTock3t.name}: ${eventTock3t.tokenPrice} (${eventTock3t.maxSupply}/${eventTock3t.mintedSupply}) </button>`);
+    $(".event-" + eventId + ">.card-body" ).append(`<button type="button" class="buyTicket btn-primary w-100 mt-1" tock3t-event-id="${eventTock3t.id}" tock3t-price="${eventTock3t.tokenPrice}" onclick="buyTock3t(${eventTock3t.id},${eventTock3t.tokenPrice});"  >${eventTock3t.name}: ${web3js.utils.fromWei(eventTock3t.tokenPrice)} MATIC (${eventTock3t.maxSupply}/${eventTock3t.mintedSupply}) </button>`);
 }
 
 function getEventDetails(id){
@@ -116,21 +116,13 @@ function getTock3tPrize(id){
 
 }
 
-function buyTock3t(eventTock3tId, price) {
+async function buyTock3t(eventTock3tId, price) {
+    let walletAddr = await getAccount();
     //return cryptoZombies.methods.levelUp(zombieId)
     return tock3ts.methods.buyTock3ts(eventTock3tId,1)
         //.send({ from: userAccount, value: web3.utils.toWei("0.001", "ether") })
         //.send({ from: userAccount, value: price })
-        .send({ from: 0xbc09d6014a6bc80f47bbcab9065ebd8288b80f05, value: price })
-        .on("receipt", function(receipt) {
-            alert("Buight sucessfully!");
-            //$("#txStatus").text("Power overwhelming! Zombie successfully leveled up");
-        })
-        .on("error", function(error) {
-            alert("Error :(");
-            console.log("error:" + error);
-            //$("#txStatus").text(error);
-        });
+        .send({ from: walletAddr, value: price });
 }
 
 var getUrlParameter = function getUrlParameter(sParam) {
@@ -153,7 +145,6 @@ var getUrlParameter = function getUrlParameter(sParam) {
 /******************************/
 
 const ethereumButton = document.querySelector('.enableEthereumButton');
-const showAccount = document.querySelector('.showAccount');
 
 ethereumButton.addEventListener('click', () => {
     getAccount();
@@ -163,7 +154,6 @@ async function getAccount() {
     const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
     const account = accounts[0];
     return account;
-    showAccount.innerHTML = account;
 }
 
 /******************************/
