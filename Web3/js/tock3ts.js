@@ -18,7 +18,7 @@ $(function() {
 
 function startApp() {
     console.log("startApp");
-    var tock3tsAddress = "0x8efCB0bE3E4bAB6FDc9A8885e55551DfbDA55A2e";
+    var tock3tsAddress = "0x9aDd6dE4882Cec2a98FC0D1e17F14511a495479D";
     tock3ts = new web3js.eth.Contract(tock3tsABI, tock3tsAddress);
 
     accounts = async () => { await web3.eth.getAccounts();}
