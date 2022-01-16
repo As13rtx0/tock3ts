@@ -221,7 +221,18 @@ contract Tock3ts is ERC721Enumerable, Ownable {
         return (events[eventId], eventTock3tsResult);
     }
 
-    function tenNextEvents() public view returns (uint[] memory){
+    function getEventDetails(uint eventId) public view returns (Event memory, EventTock3t[] memory ){
+        //Event memory result = events[id];
+        uint[] memory eventTock3tsIds  =  eventToEventTock3ts[eventId];
+        EventTock3t[] memory eventTock3tsResult;
+        for(uint i=0;i<eventTock3tsIds.length;i++)
+        {
+            eventTock3tsResult[i]= eventTock3ts[eventTock3tsIds[i]];
+        }
+        return (events[eventId], eventTock3tsResult);
+    }
+
+    function getTenNextEvents() public view returns (uint[] memory){
         uint[] memory ids;
         uint counter;
         for (uint i=0; i < events.length && i < 10; i++){
