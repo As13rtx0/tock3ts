@@ -17,20 +17,23 @@ $(function() {
 });
 
 function startApp() {
+    console.log("startApp");
     var tock3tsAddress = "0x8efCB0bE3E4bAB6FDc9A8885e55551DfbDA55A2e";
     tock3ts = new web3js.eth.Contract(tock3tsABI, tock3tsAddress);
 
     accounts = async () => { await web3.eth.getAccounts();}
     userAccount = accounts[0];
 
-    // var accountInterval = setInterval(function() {
-    //   // Check if account has changed
-    //   if (web3.eth.accounts[0] !== userAccount) {
-    //     userAccount = web3.eth.accounts[0];
-    //   }
-    // }, 100);
+     var accountInterval = setInterval(function() {
+       // Check if account has changed
+       if (web3.eth.accounts[0] !== userAccount) {
+
+           console.log("interval:" +  JSON.stringify(userAccount));
+           //userAccount = web3.eth.accounts[0];
+       }
+    }, 3000);
     //initialized=true;
-    console.log("startApp... initialized=true");
+    //console.log("startApp... initialized=true");
 }
 
 function displayNextEventsCards(ids, target) {
@@ -118,10 +121,7 @@ function getTock3tPrize(id){
 
 async function buyTock3t(eventTock3tId, price) {
     let walletAddr = await getAccount();
-    //return cryptoZombies.methods.levelUp(zombieId)
     return tock3ts.methods.buyTock3ts(eventTock3tId,1)
-        //.send({ from: userAccount, value: web3.utils.toWei("0.001", "ether") })
-        //.send({ from: userAccount, value: price })
         .send({ from: walletAddr, value: price });
 }
 
@@ -144,11 +144,7 @@ var getUrlParameter = function getUrlParameter(sParam) {
 
 /******************************/
 
-const ethereumButton = document.querySelector('.enableEthereumButton');
 
-ethereumButton.addEventListener('click', () => {
-    getAccount();
-});
 
 async function getAccount() {
     const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
@@ -156,4 +152,15 @@ async function getAccount() {
     return account;
 }
 
+async function printAccount() {
+    console.log("printAccount");
+    let walletAddr = await getAccount();
+    if(walletAddr==null || walletAddr==""){
+        console.log("nowallet");
+    }
+    else{
+        console.log("wallet: " + walletAddr);
+    }
+    showAccount.innerHTML = account;
+}
 /******************************/

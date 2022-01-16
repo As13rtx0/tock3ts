@@ -18,6 +18,7 @@
 
 <script>
   $(function() {
+    displayNextEventsCards([0],"#nextEvents");
 
     const ethereumButton = document.querySelector('.enableEthereumButton');
     const showAccount = document.querySelector('.showAccount');
@@ -25,14 +26,6 @@
     ethereumButton.addEventListener('click', () => {
       printAccount();
     });
-
-    async function printAccount() {
-      const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
-      const account = accounts[0];
-      showAccount.innerHTML = account;
-    }
-
-    displayNextEventsCards([0],"#nextEvents");
   });
 </script>
 
@@ -55,7 +48,9 @@
 
 <nav class="navbar navbar-expand-md navbar-dark fixed-top bg-dark">
   <div class="container">
-    <a class="navbar-brand" href="index.html">Tock3ts</a>
+    <a class="navbar-brand" href="index.html">
+      <img src="imgs/logo.png" alt="" width="30" height="24">
+    </a>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
@@ -85,10 +80,10 @@
     <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.Donec est risus, tristique in ipsum a, rhoncus iaculis nisl.</p>
     <p>Nullam massa nulla, dictum tincidunt placerat sed, tempus in justo. Mauris pretium sapien vel mattis elementum. Fusce rutrum ullamcorper nulla, in hendrerit eros. Mauris lacinia mattis fringilla. Sed nec consequat purus, ut semper est. Nunc sodales molestie sapien, in semper dolor ullamcorper faucibus. Phasellus mollis vel tellus commodo venenatis. Vestibulum quis consectetur enim, id iaculis mauris. Cras sit amet nulla orci. Curabitur vitae urna eros. Donec sapien nulla, tincidunt ut placerat eget, sollicitudin et lectus.</p>
   </div>
-  <div class="row">
-    <button class="enableEthereumButton col-3">Enable Ethereum</button>
-    <h2>Account: <span class="showAccount"></span></h2>
-  </div>
+<!--  <div class="row">-->
+<!--    <button class="enableEthereumButton col-3">Enable Ethereum</button>-->
+<!--    <h2>Account: <span class="showAccount"></span></h2>-->
+<!--  </div>-->
 <!--  <div className="alert alert-success" role="alert">-->
 <!--    A simple success alert—check it out!-->
 <!--  </div>-->
