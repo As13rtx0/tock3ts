@@ -76,6 +76,9 @@ contract Tock3ts is ERC721Enumerable, Ownable {
         eventToOwner[events.length] = msg.sender;
         events.push(newEvent);
         emit NewEventCreated(newEvent);
+
+        uint refundExcess = msg.value - createEventPrice;
+        payable(msg.sender).transfer(refundExcess);
     }
 
     function createEventTock3ts(uint _eventId, string[] memory _eTName, string[] memory _eTDescription,
@@ -93,6 +96,9 @@ contract Tock3ts is ERC721Enumerable, Ownable {
             eventTock3ts.push(eventTock3t);
             emit NewEventTock3tCreated(eventTock3t);
         }
+
+        uint refundExcess = msg.value - (_eTName.length * createEventTock3tPrice);
+        payable(msg.sender).transfer(refundExcess);
     }
 
     function buyTock3ts(uint eventTock3tId, uint tock3tAmount) public payable{
@@ -114,7 +120,7 @@ contract Tock3ts is ERC721Enumerable, Ownable {
             tock3ts.push(tock3t);
             _safeMint(msg.sender, tock3t.id);
             tokenToAddress[tock3t.id] = msg.sender;
-            thisEventTock3t.mintedSupply++;
+            eventTock3ts[eventTock3tId].mintedSupply++;
         }
         uint refundExcess = msg.value - (thisEventTock3t.tokenPrice * tock3tAmount);
         payable(eventToOwner[thisEvent.id]).transfer((thisEventTock3t.tokenPrice * tock3tAmount) * 4 / 5);
@@ -126,6 +132,9 @@ contract Tock3ts is ERC721Enumerable, Ownable {
         require(registerPrice <= msg.value, "tock3ts: insuficient payable amount.");
 
         isAddressRegistered[msg.sender] = true;
+
+        uint refundExcess = msg.value - registerPrice;
+        payable(msg.sender).transfer(refundExcess);
     }
 
     function verify(address addr) public onlyOwner{
@@ -141,6 +150,7 @@ contract Tock3ts is ERC721Enumerable, Ownable {
     }
 
     function unverify(address addr) public onlyOwner{
+        require(isAddressVerified[addr], "tock3ts: address is not verified");
         isAddressVerified[addr] = false;
     }
 
@@ -208,6 +218,17 @@ contract Tock3ts is ERC721Enumerable, Ownable {
 
     function getEventTock3tsByEvent(uint _eventId) public view returns(uint[] memory){
         return eventToEventTock3ts[_eventId];
+    }
+
+    function getEventDetails(uint eventId) public view returns (Event memory, EventTock3t[] memory ){
+        //Event memory result = events[id];
+        uint[] memory eventTock3tsIds  =  eventToEventTock3ts[eventId];
+        EventTock3t[] memory eventTock3tsResult;
+        for(uint i=0;i<eventTock3tsIds.length;i++)
+        {
+            eventTock3tsResult[i]= eventTock3ts[eventTock3tsIds[i]];
+        }
+        return (events[eventId], eventTock3tsResult);
     }
 
     function tenNextEvents() public view returns (uint[] memory){
